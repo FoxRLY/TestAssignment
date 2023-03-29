@@ -79,10 +79,11 @@ pub fn slice_into_chunks<T>(
 /// Многопоточный исполнитель
 pub fn parallel_func<T, R, F>(data: Vec<T>, func: F) -> Vec<R>
 where
-    F: (FnMut(T) -> R) + Send + 'static + Clone,
-    R: Send + 'static,
-    T: Send + 'static,
+    F: (FnOnce(T) -> R) + Send + Clone,
+    R: Send,
+    T: Send + Sync + Clone,
 {
+
     let threshold_chunk_size: usize = 10;   // Размеры делений данных до достижения
                                             // максимального количества потоков
     let max_thread_count = 10;              // Максимальное количество потоков
@@ -91,23 +92,28 @@ where
     let chunks = slice_into_chunks(data, threshold_chunk_size, max_thread_count);
 
     // Запуск потоков 
-    let mut thread_handles = vec![];
-    for chunk in chunks.into_iter() {
-        let mut new_func = func.clone();
-        thread_handles.push(thread::spawn(move || {
-            let mut thread_result = vec![];
-            for item in chunk.into_iter() {
-                thread_result.push(new_func(item));
-            }
-            thread_result
-        }));
-    }
-
-    // Получение результатов через join
-    let mut result = vec![];
-    for handle in thread_handles {
-        result.extend(handle.join().unwrap());
-    }
+    //
+    let result = std::thread::scope(move|s|{
+        let chunks = chunks.clone();
+        let mut thread_handles = vec![];
+        for chunk in chunks{
+            let func = func.clone();
+            let handle = s.spawn(move||{
+                let mut thread_result = vec![];
+                for item in chunk{
+                    let func = func.clone();
+                    thread_result.push(func(item));
+                }
+                thread_result
+            });
+            thread_handles.push(handle);
+        }
+        let mut result = vec![];
+        for h in thread_handles{
+            result.extend(h.join().unwrap());
+        }
+        result
+    });
     result
 }
 
@@ -125,3 +131,4 @@ mod tests{
         assert_eq!(data, result);
     }
 }
+

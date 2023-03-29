@@ -17,3 +17,4 @@ fn main() {
     let result = std_flavour::parallel_func(b, std_flavour::test_func);
     result.iter().for_each(|x| println!("{x}"));
 }
+
