@@ -110,3 +110,18 @@ where
     }
     result
 }
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+
+    #[test]
+    fn parallel_test(){
+        let data = vec![1,2,3,4,5];
+        let result = parallel_func(data.clone(), |x|{
+            println!("Processed {x}");
+            x
+        });
+        assert_eq!(data, result);
+    }
+}
