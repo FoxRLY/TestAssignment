@@ -94,7 +94,6 @@ where
     // Запуск потоков 
     //
     let result = std::thread::scope(move|s|{
-        let chunks = chunks.clone();
         let mut thread_handles = vec![];
         for chunk in chunks{
             let func = func.clone();
