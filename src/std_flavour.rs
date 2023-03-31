@@ -81,7 +81,7 @@ pub fn parallel_func<T, R, F>(data: Vec<T>, func: F) -> Vec<R>
 where
     F: (FnOnce(T) -> R) + Send + Clone,
     R: Send,
-    T: Send + Sync + Clone,
+    T: Send,
 {
 
     let threshold_chunk_size: usize = 10;   // Размеры делений данных до достижения
