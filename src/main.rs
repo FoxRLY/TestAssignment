@@ -8,7 +8,7 @@ fn main() {
     let (rx, tx) = channel();
     std_flavour::parallel_func(a, move |x| {
         std::thread::sleep(Duration::from_secs(2));
-        rx.clone().send(format!("{x}")).unwrap();
+        rx.send(format!("{x}")).unwrap();
     });
     while let Ok(val) = tx.try_recv() {
         println!("{val}");
