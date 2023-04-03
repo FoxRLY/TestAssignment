@@ -58,7 +58,7 @@ pub fn slice_into_chunks<T>(
     let mut result: Vec<Vec<T>> = Vec::with_capacity(chunk_count);
 
     // Процесс разбиения на части
-    let mut data_iter = data.into_iter().peekable();    // Превращаем данные в итератор 
+    let mut data_iter = data.into_iter().peekable();    // Превращаем данные в итератор
     'chunk_end: for chunk_index in 0..chunk_count {     // Верхний цикл по частям
         if data_iter.peek().is_none() {                 // Если данные кончились - выходим
             break;
@@ -83,7 +83,6 @@ where
     R: Send,
     T: Send,
 {
-
     let threshold_chunk_size: usize = 10;   // Размеры делений данных до достижения
                                             // максимального количества потоков
     let max_thread_count = 10;              // Максимальное количество потоков
@@ -91,15 +90,14 @@ where
     // Деление данных на более менее равные части
     let chunks = slice_into_chunks(data, threshold_chunk_size, max_thread_count);
 
-    // Запуск потоков 
-    //
-    let result = std::thread::scope(move|s|{
+    // Запуск потоков
+    std::thread::scope(move |s| {
         let mut thread_handles = vec![];
-        for chunk in chunks{
+        for chunk in chunks {
             let func = func.clone();
-            let handle = s.spawn(move||{
+            let handle = s.spawn(move || {
                 let mut thread_result = vec![];
-                for item in chunk{
+                for item in chunk {
                     let func = func.clone();
                     thread_result.push(func(item));
                 }
@@ -107,27 +105,24 @@ where
             });
             thread_handles.push(handle);
         }
-        let mut result = vec![];
-        for h in thread_handles{
-            result.extend(h.join().unwrap());
-        }
-        result
-    });
-    result
+        thread_handles.into_iter().fold(vec![], |mut acc, handle| {
+            acc.extend(handle.join().unwrap());
+            acc
+        })
+    })
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
 
     #[test]
-    fn parallel_test(){
-        let data = vec![1,2,3,4,5];
-        let result = parallel_func(data.clone(), |x|{
+    fn parallel_test() {
+        let data = vec![1, 2, 3, 4, 5];
+        let result = parallel_func(data.clone(), |x| {
             println!("Processed {x}");
             x
         });
         assert_eq!(data, result);
     }
 }
-
